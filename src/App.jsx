@@ -5,6 +5,8 @@ function App() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [newTitle, setNewTitle] = useState("");
   const [newGenre, setNewGenre] = useState("")
@@ -31,18 +33,29 @@ function App() {
   async function handleAddGame() {
     if (!newTitle.trim() || !newGenre.trim()) return;
 
-    const response = await fetch("http://127.0.0.1:8000/games", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title: newTitle, played: false, genre: newGenre }),
-    });
+    setSubmitting(true);
+    setSubmitError(null);
 
-    const addedGame = await response.json();
-    setGames([...games, addedGame]);
-    setNewTitle("");
-    setNewGenre("");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/games", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: newTitle, played: false, genre: newGenre }),
+      });
+
+      if (!response.ok) throw new Error('Server error: ${response.status}');
+
+      const addedGame = await response.json();
+      setGames([...games, addedGame]);
+      setNewTitle("");
+      setNewGenre("");
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (loading) return <p>Loading games...</p>;
@@ -66,9 +79,17 @@ function App() {
          onChange={(e) => setNewGenre(e.target.value)}
          style={{ padding: "6px", fontSize: "14px" }}
          />
-         <button onClick={handleAddGame} style={{ padding: "6px 12px"}}>
-          Add Game
+         <button 
+          onClick={handleAddGame} 
+          disabled={submitting}
+          style={{ padding: "6px 12px"}}
+         >
+          {submitting ? "Adding..." : "Add Game"}
          </button>
+
+         {submitError && (
+          <p style={{ color: "red" }}>{submitError}</p>
+         )}
       </div>
       <h6 style={{ color: "gray" }}>{games.length} games in backlog</h6>
       <ul style={{ listStyle: "none", padding: 0 }}>
