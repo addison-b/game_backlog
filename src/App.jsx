@@ -7,9 +7,11 @@ function App() {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [newTitle, setNewTitle] = useState("");
-  const [newGenre, setNewGenre] = useState("")
+  const [newGenre, setNewGenre] = useState("");
+  const [newPlayed, setNewPlayed] = useState(false);
 
   useEffect(() => {
     async function loadGames() {
@@ -42,15 +44,18 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title: newTitle, played: false, genre: newGenre }),
+        body: JSON.stringify({ title: newTitle, played: newPlayed, genre: newGenre }),
       });
 
       if (!response.ok) throw new Error('Server error: ${response.status}');
 
       const addedGame = await response.json();
       setGames([...games, addedGame]);
+      setSuccessMsg("Game added!");
+      setTimeout(() => setSuccessMsg(null), 2000)
       setNewTitle("");
       setNewGenre("");
+      setNewPlayed(false);
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -71,6 +76,8 @@ function App() {
          value={newTitle}
          onChange={(e) => setNewTitle(e.target.value)}
          style={{ padding: "6px", fontSize: "14px" }}
+         onKeyDown={(e) => { if (e.key === 'Enter') 
+          handleAddGame(); }}      
          />
         <input
          type="text"
@@ -78,15 +85,24 @@ function App() {
          value={newGenre}
          onChange={(e) => setNewGenre(e.target.value)}
          style={{ padding: "6px", fontSize: "14px" }}
+         onKeyDown={(e) => { if (e.key === 'Enter') 
+          handleAddGame(); }}             
+         />
+         <input
+          type="checkbox"
+          checked={newPlayed}
+          onChange={(e) => setNewPlayed(e.target.checked)} 
          />
          <button 
           onClick={handleAddGame} 
-          disabled={submitting}
+          disabled={submitting || !newTitle.trim() || !newGenre.trim()}
           style={{ padding: "6px 12px"}}
          >
           {submitting ? "Adding..." : "Add Game"}
          </button>
-
+         {successMsg && (
+          <p style={{ color: "green" }}>{successMsg}</p>
+         )}
          {submitError && (
           <p style={{ color: "red" }}>{submitError}</p>
          )}
