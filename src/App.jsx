@@ -28,15 +28,22 @@ function App() {
     loadGames();
   }, [fetchTrigger]);
 
-  /*
-  function togglePlayed(id) {
-    setGames(
-      games.map((game) =>
-        game.id === id ? { ...game, played: !game.played } : game,
-      ),
-    );
+  async function handleAddGame() {
+    if (!newTitle.trim() || !newGenre.trim()) return;
+
+    const response = await fetch("http://127.0.0.1:8000/games", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title: newTitle, played: false, genre: newGenre }),
+    });
+
+    const addedGame = await response.json();
+    setGames([...games, addedGame]);
+    setNewTitle("");
+    setNewGenre("");
   }
-*/
 
   if (loading) return <p>Loading games...</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
@@ -59,7 +66,7 @@ function App() {
          onChange={(e) => setNewGenre(e.target.value)}
          style={{ padding: "6px", fontSize: "14px" }}
          />
-         <button style={{ padding: "6px 12px"}}>
+         <button onClick={handleAddGame} style={{ padding: "6px 12px"}}>
           Add Game
          </button>
       </div>
