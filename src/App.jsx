@@ -6,6 +6,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [newTitle, setNewTitle] = useState("");
+  const [newGenre, setNewGenre] = useState("")
 
   useEffect(() => {
     async function loadGames() {
@@ -42,6 +44,25 @@ function App() {
   return (
     <div style={{ padding: "24px", fontFamily: "sans-serif" }}>
       <h3>🎮 Game Tracker</h3>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
+        <input
+         type="text"
+         placeholder="Title"
+         value={newTitle}
+         onChange={(e) => setNewTitle(e.target.value)}
+         style={{ padding: "6px", fontSize: "14px" }}
+         />
+        <input
+         type="text"
+         placeholder="Genre"
+         value={newGenre}
+         onChange={(e) => setNewGenre(e.target.value)}
+         style={{ padding: "6px", fontSize: "14px" }}
+         />
+         <button style={{ padding: "6px 12px"}}>
+          Add Game
+         </button>
+      </div>
       <h6 style={{ color: "gray" }}>{games.length} games in backlog</h6>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {games.map((game) => (
