@@ -5,7 +5,13 @@ function App() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [newTitle, setNewTitle] = useState("");
+  const [newGenre, setNewGenre] = useState("");
+  const [newPlayed, setNewPlayed] = useState(false);
 
   useEffect(() => {
     async function loadGames() {
@@ -26,15 +32,36 @@ function App() {
     loadGames();
   }, [fetchTrigger]);
 
-  /*
-  function togglePlayed(id) {
-    setGames(
-      games.map((game) =>
-        game.id === id ? { ...game, played: !game.played } : game,
-      ),
-    );
+  async function handleAddGame() {
+    if (!newTitle.trim() || !newGenre.trim()) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/games", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: newTitle, played: newPlayed, genre: newGenre }),
+      });
+
+      if (!response.ok) throw new Error('Server error: ${response.status}');
+
+      const addedGame = await response.json();
+      setGames([...games, addedGame]);
+      setSuccessMsg("Game added!");
+      setTimeout(() => setSuccessMsg(null), 2000)
+      setNewTitle("");
+      setNewGenre("");
+      setNewPlayed(false);
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
-*/
 
   if (loading) return <p>Loading games...</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
@@ -42,6 +69,44 @@ function App() {
   return (
     <div style={{ padding: "24px", fontFamily: "sans-serif" }}>
       <h3>🎮 Game Tracker</h3>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
+        <input
+         type="text"
+         placeholder="Title"
+         value={newTitle}
+         onChange={(e) => setNewTitle(e.target.value)}
+         style={{ padding: "6px", fontSize: "14px" }}
+         onKeyDown={(e) => { if (e.key === 'Enter') 
+          handleAddGame(); }}      
+         />
+        <input
+         type="text"
+         placeholder="Genre"
+         value={newGenre}
+         onChange={(e) => setNewGenre(e.target.value)}
+         style={{ padding: "6px", fontSize: "14px" }}
+         onKeyDown={(e) => { if (e.key === 'Enter') 
+          handleAddGame(); }}             
+         />
+         <input
+          type="checkbox"
+          checked={newPlayed}
+          onChange={(e) => setNewPlayed(e.target.checked)} 
+         />
+         <button 
+          onClick={handleAddGame} 
+          disabled={submitting || !newTitle.trim() || !newGenre.trim()}
+          style={{ padding: "6px 12px"}}
+         >
+          {submitting ? "Adding..." : "Add Game"}
+         </button>
+         {successMsg && (
+          <p style={{ color: "green" }}>{successMsg}</p>
+         )}
+         {submitError && (
+          <p style={{ color: "red" }}>{submitError}</p>
+         )}
+      </div>
       <h6 style={{ color: "gray" }}>{games.length} games in backlog</h6>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {games.map((game) => (
